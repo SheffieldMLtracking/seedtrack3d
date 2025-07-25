@@ -10,5 +10,7 @@ setup(
   download_url = 'https://github.com/lionfish0/seedtrack3d.git',
   keywords = ['seeds','3d','calibration'],
   classifiers = [],
-  install_requires=[],
+  install_requires=['numpy','opencv-python','scipy','alignment @ git+https://github.com/SheffieldMLtracking/alignment.git'],
+  scripts=['bin/seedtrack3d'],
 )
+

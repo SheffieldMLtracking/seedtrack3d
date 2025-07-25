@@ -1,0 +1,91 @@
+#!/usr/bin/env python
+import numpy as np
+import glob
+import alignment
+import os
+import argparse
+from seedtrack3d import load_images, get_seed_2d_coordinates
+import pickle
+
+
+parser = argparse.ArgumentParser(description='Using a series of videos (saved as tiff files) and a stereo-mirror system, reconstruct 3d path of seed being dropped.')
+parser.add_argument('--calibration',type=str,help='Path to calibration images')
+
+parser.add_argument('--calibrationN',required=False,type=int,help='How many calibration images to use')
+parser.add_argument('--images',type=str,help='Path to seed drop images')
+parser.add_argument('--calsquarewidth',required=True,type=float,help='Size of the calibration square, in metres (e.g. 0.175)')
+parser.add_argument('--hfov',required=True,type=float,help='The horizontal field of view, in degrees (e.g. 19.2)')
+parser.add_argument('--skip',type=int,help='Only use every nth image (only useful for speed during testing)')
+parser.add_argument('--output_filename',type=str,help='Filename to write 3d coordinates in. Default is to the last folder in path.')
+parser.add_argument('--recompute_calibration_cache',help='Recompute cache', action='store_true')
+parser.add_argument('--threshold',type=int,default=7,required=False,help='Brightness threshold for seed detection (default = 7) -- decrease to be more sensitivitive, increase to be less sensitive.')
+#parser.add_argument('--refreshcache',help='Whether to refresh the cache',action="store_true")
+args = parser.parse_args()
+
+hfov = args.hfov
+calibration_search = os.path.join(os.path.normpath(args.calibration), '*.tiff')
+image_search = os.path.join(os.path.normpath(args.images), '*.tiff')
+
+output_filename = args.output_filename
+if output_filename is None:
+    output_filename = os.path.split(os.path.normpath(args.images))[-1]+'.csv'
+
+def quickhash(text:str):
+  hash=0
+  for ch in text:
+    hash = ( hash*281  ^ ord(ch)*997) & 0xFFFFFFFF
+  return hash
+
+calsquarewidth = args.calsquarewidth
+
+calibration_image_filenames = sorted(glob.glob(calibration_search))
+cache_hash = quickhash(str(calibration_image_filenames)+str(calsquarewidth)+str(hfov))%10000000000
+try:
+    if args.recompute_calibration_cache: raise Exception
+    al = pickle.load(open('alignment_cache_%d.pkl' % cache_hash,'rb'))
+    print("Found cached alignment (alignment_cache_%d.pkl) data."  % cache_hash)
+except:
+    print("Not using alignment cache (alignment_cache_%d.pkl), recomputing"  % cache_hash)
+    allimages = [[],[]]
+    allintervals = [[],[]]
+
+
+    #between 14-19 photos used for calibration.
+    #step = 1+len(calibration_image_filenames)//20 #e.g. if 6 are taken, step = 1 [all 6 used]; if 18 are taken, step = 1 [all 18 used]; if 46 are taken, step = 3 [15 used].
+    if args.calibrationN is not None:
+        calibrationN = args.calibrationN
+    else:
+        calibrationN = min(len(calibration_image_filenames),7)
+
+    print("Calibration in progress (using %d images):" % calibrationN)
+    for i,imfn in enumerate(calibration_image_filenames[:calibrationN]):
+        print(imfn)
+        imgs = load_images(imfn)
+        allimages[0].append(imgs[0])
+        allimages[1].append(imgs[1])
+        allintervals[0].append(i)
+        allintervals[1].append(i)
+
+    al = alignment.build_alignment_object(allimages,allintervals,hfov=np.deg2rad(hfov),calsquarewidth=calsquarewidth) #np.rad2deg(0.4)=23 degrees
+    al.compute_orientation()
+
+    print("Saving cache")
+    #remove photos to make cache small.
+    for photo in al.photos:
+        photo.image = None
+    pickle.dump(al,open('alignment_cache_%d.pkl' % cache_hash,'wb'))
+
+threshold = args.threshold
+image_fns = sorted(glob.glob(image_search))
+print("Getting seed 2d coordinates in images")
+if args.skip is not None:
+    image_fns = image_fns[::args.skip]
+coords2d = get_seed_2d_coordinates(image_fns)
+print("Done. %d found." % len(coords2d))
+coords2d = np.array([(c[0],c[1],c[2],c[3][1],c[3][0],c[4][1],c[4][0]) for c in coords2d]) #convert to a easy array
+coords2d = coords2d[(coords2d[:,1]>threshold) & (coords2d[:,2]>threshold)]
+print("Removing coordinates below threshold. %d remaining." % len(coords2d))
+print("Computing 3d coordinates")
+coords3d, dists = al.get3dpoint(coords2d[:,3:5],coords2d[:,5:7])
+print("Done. Saving to %s" % output_filename)
+np.savetxt(output_filename,coords3d,fmt="%0.5f",delimiter=',')
