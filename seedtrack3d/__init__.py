@@ -4,6 +4,9 @@ import cv2
 import scipy.ndimage as ndimage
 import alignment
 import os
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')
 
 def convert_images(img,bg=255):
     a = int(1224*0.5)
@@ -24,9 +27,11 @@ def load_images(fname):
     greyscaleimg = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     return convert_images(greyscaleimg)
 
-def get_seed_2d_coordinates(image_fns,save_debug_images=None,smooth=2, threshold=7, undistort=True):
+def get_seed_2d_coordinates(image_fns,save_debug_images=None,smooth=2):
     """
-    
+    image_fns = list of filenames to images of seeds.
+    save_debug_images = whether to save debug images.
+    smooth = amount to smooth the images (to help reduce noise), in pixels.
     """
     if save_debug_images is not None:
         plt.figure(figsize=[5,2*len(image_fns)/save_debug_images])
@@ -52,13 +57,13 @@ def get_seed_2d_coordinates(image_fns,save_debug_images=None,smooth=2, threshold
                 if imgindex%save_debug_images==0:
                     for imgpairi in range(2):
                         plt.subplot(int(1+len(image_fns)/save_debug_images),2,int(2*(imgindex/save_debug_images)+imgpairi+1))
-                        plt.imshow(diff_imgs[imgpairi][max(coords[imgpairi][0]-100,0):min(coords[imgpairi][0]+100,2047),max(coords[imgpairi][1]-100,0):min(coords[imgpairi][1]+100,1223)])
+                        plt.imshow(diff_imgs[imgpairi][max(coords[imgpairi][0]-100,0):min(coords[imgpairi][0]+100,2047),max(coords[imgpairi][1]-100,0):min(coords[imgpairi][1]+100,2447)])
                         plt.clim([0,np.max(diff_imgs[imgpairi])])
                         plt.vlines([100,100],[25,125],[75,175],'w')
                         plt.hlines([100,100],[25,125],[75,175],'w')
                         plt.xticks([])
                         plt.yticks([])
-                        if imgpairi==0: plt.title("%0.1f %0.1f " % (np.max(diff_imgs[0]),np.max(diff_imgs[1]))+str(coords))
+                        if imgpairi==0: plt.title("%d: %0.1f %0.1f " % (imgindex,np.max(diff_imgs[0]),np.max(diff_imgs[1]))+str(coords))
         lastimg = greyscaleimg
     if save_debug_images:
         path_to_data, _ = os.path.split(image_fns[0])

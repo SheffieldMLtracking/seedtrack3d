@@ -18,6 +18,7 @@ parser.add_argument('--hfov',required=True,type=float,help='The horizontal field
 parser.add_argument('--skip',type=int,help='Only use every nth image (only useful for speed during testing)')
 parser.add_argument('--output_filename',type=str,help='Filename to write 3d coordinates in. Default is to the last folder in path.')
 parser.add_argument('--recompute_calibration_cache',help='Recompute cache', action='store_true')
+parser.add_argument('--save_debug_images',help='Save a pdf in the images folder to help detect errors.', action='store_true')
 parser.add_argument('--threshold',type=int,default=7,required=False,help='Brightness threshold for seed detection (default = 7) -- decrease to be more sensitivitive, increase to be less sensitive.')
 #parser.add_argument('--refreshcache',help='Whether to refresh the cache',action="store_true")
 args = parser.parse_args()
@@ -80,7 +81,12 @@ image_fns = sorted(glob.glob(image_search))
 print("Getting seed 2d coordinates in images")
 if args.skip is not None:
     image_fns = image_fns[::args.skip]
-coords2d = get_seed_2d_coordinates(image_fns)
+    
+if args.save_debug_images is not None:
+    save_debug_images = 4
+else:
+    save_debug_images = None
+coords2d = get_seed_2d_coordinates(image_fns,save_debug_images=save_debug_images)
 print("Done. %d found." % len(coords2d))
 coords2d = np.array([(c[0],c[1],c[2],c[3][1],c[3][0],c[4][1],c[4][0]) for c in coords2d]) #convert to a easy array
 coords2d = np.c_[np.arange(len(coords2d)),coords2d]
