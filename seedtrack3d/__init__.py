@@ -63,7 +63,7 @@ def get_seed_2d_coordinates(image_fns,save_debug_images=None,smooth=2):
                         plt.hlines([100,100],[25,125],[75,175],'w')
                         plt.xticks([])
                         plt.yticks([])
-                        if imgpairi==0: plt.title("%d: %0.1f %0.1f " % (imgindex,np.max(diff_imgs[0]),np.max(diff_imgs[1]))+str(coords))
+                        if imgpairi==0: plt.title("                %d: %0.1f %0.1f " % (imgindex,np.max(diff_imgs[0]),np.max(diff_imgs[1]))+str(coords))
         lastimg = greyscaleimg
     if save_debug_images:
         path_to_data, _ = os.path.split(image_fns[0])

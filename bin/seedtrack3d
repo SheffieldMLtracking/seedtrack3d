@@ -18,7 +18,7 @@ parser.add_argument('--hfov',required=True,type=float,help='The horizontal field
 parser.add_argument('--skip',type=int,help='Only use every nth image (only useful for speed during testing)')
 parser.add_argument('--output_filename',type=str,help='Filename to write 3d coordinates in. Default is to the last folder in path.')
 parser.add_argument('--recompute_calibration_cache',help='Recompute cache', action='store_true')
-parser.add_argument('--save_debug_images',help='Save a pdf in the images folder to help detect errors.', action='store_true')
+parser.add_argument('--save_debug_images',help='Save a pdf in the images folder to help detect errors (saves every 4th image). Note: Title of each shows: image index, brightest pixel value in left and right images, coordinates of these pixels in the two images.', action='store_true')
 parser.add_argument('--threshold',type=int,default=7,required=False,help='Brightness threshold for seed detection (default = 7) -- decrease to be more sensitivitive, increase to be less sensitive.')
 #parser.add_argument('--refreshcache',help='Whether to refresh the cache',action="store_true")
 args = parser.parse_args()
