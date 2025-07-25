@@ -83,9 +83,11 @@ if args.skip is not None:
 coords2d = get_seed_2d_coordinates(image_fns)
 print("Done. %d found." % len(coords2d))
 coords2d = np.array([(c[0],c[1],c[2],c[3][1],c[3][0],c[4][1],c[4][0]) for c in coords2d]) #convert to a easy array
-coords2d = coords2d[(coords2d[:,1]>threshold) & (coords2d[:,2]>threshold)]
+coords2d = np.c_[np.arange(len(coords2d)),coords2d]
+coords2d = coords2d[(coords2d[:,2]>threshold) & (coords2d[:,3]>threshold)]
 print("Removing coordinates below threshold. %d remaining." % len(coords2d))
 print("Computing 3d coordinates")
-coords3d, dists = al.get3dpoint(coords2d[:,3:5],coords2d[:,5:7])
+coords3d, dists = al.get3dpoint(coords2d[:,4:6],coords2d[:,6:8])
+coords3d = np.c_[coords2d[:,0],coords3d]
 print("Done. Saving to %s" % output_filename)
 np.savetxt(output_filename,coords3d,fmt="%0.5f",delimiter=',')
