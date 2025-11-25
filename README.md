@@ -35,11 +35,15 @@ options:
                         last folder in path.
   --recompute_calibration_cache
                         Recompute cache
-  --save_debug_images   Save a pdf in the images folder to help detect errors.
+  --save_debug_images   Save a pdf in the images folder to help detect errors
+                        (saves every 4th image). Note: Title of each shows:
+                        image index, brightest pixel value in left and right
+                        images, coordinates of these pixels in the two images.
   --threshold THRESHOLD
                         Brightness threshold for seed detection (default = 7)
                         -- decrease to be more sensitivitive, increase to be
-                        less sensitive
+                        less sensitive.
+
 ```
 
 Example usage:
